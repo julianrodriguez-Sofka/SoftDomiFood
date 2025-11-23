@@ -1,0 +1,65 @@
+# Dockerfile para entorno de testing automatizado
+# Contexto: Construido desde la raíz del repositorio
+# Propósito: Entorno aislado para ejecutar pruebas de la API FastAPI
+
+FROM python:3.11-slim
+
+# Metadatos
+LABEL maintainer="QA Team"
+LABEL description="Entorno de testing automatizado para API FastAPI"
+LABEL version="1.0.0"
+
+# Variables de entorno para testing
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias del sistema necesarias para PostgreSQL y compilación
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    postgresql-client \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar TODO el proyecto a /app (contexto desde raíz del repositorio)
+# Esto asegura que todos los módulos y dependencias estén disponibles
+# NOTA: El contexto de build debe ser la raíz del repositorio
+COPY . /app
+
+# Verificar que requirements.txt existe antes de instalar
+# Esto previene errores si el archivo no está presente
+RUN test -f /app/api/requirements.txt || (echo "Error: api/requirements.txt no encontrado" && exit 1)
+
+# Instalar dependencias de producción de la API
+RUN pip install --no-cache-dir -r /app/api/requirements.txt
+
+# Instalar dependencias de testing
+# pytest, pytest-asyncio, httpx para testing de FastAPI
+# bandit para análisis de seguridad estática
+# locust para pruebas de carga y estrés
+# aiosqlite para SQLite async en tests
+RUN pip install --no-cache-dir \
+    pytest==7.4.3 \
+    pytest-asyncio==0.21.1 \
+    pytest-cov==4.1.0 \
+    httpx==0.25.2 \
+    pytest-mock==3.12.0 \
+    bandit[toml]==1.7.5 \
+    pbr==5.11.1 \
+    locust==2.17.0 \
+    aiosqlite==0.19.0
+
+# Verificar que el directorio de pruebas existe
+RUN mkdir -p /app/qa_automated
+
+# Exponer puerto para tests que requieran servidor (opcional)
+EXPOSE 5000
+
+# Comando por defecto: ejecutar pruebas desde el subdirectorio qa_automated
+# Usar ruta absoluta para evitar errores de rutas relativas
+CMD ["pytest", "/app/qa_automated/", "-v", "--tb=short", "--cov=/app/api", "--cov-report=term-missing"]
+

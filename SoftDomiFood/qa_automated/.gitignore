@@ -1,0 +1,30 @@
+# Archivos generados por pytest
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Reportes de coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Archivos temporales
+*.log
+*.tmp
+.cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de test específicos (opcional, descomentar si no quieres commitear tests)
+# tests/*.py
+# !tests/example_test.py
+# !tests/.gitkeep
+
