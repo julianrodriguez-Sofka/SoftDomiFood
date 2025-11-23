@@ -1440,8 +1440,8 @@ Este documento cumple con todos los requisitos para servir como:
 
 ---
 
-**Última actualización:** Diciembre 2024  
+**Última actualización:** Noviembre 23 del 2025
 **Versión del documento:** 5.0  
 **Estado:** ✅ Documento Auditado y Aprobado como Base Obligatoria  
 **Mantenido por:** Equipo de Desarrollo SoftDomiFood  
-**Próxima Revisión:** Marzo 2025
+**Próxima Revisión:** Marzo 2026

@@ -621,7 +621,7 @@ Para soporte o preguntas:
 
 ---
 
-**Última actualización:** Diciembre 2024  
+**Última actualización:** Noviembre 23 del 2025 
 **Versión:** 1.0.0-beta
 
 ---
