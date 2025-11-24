@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: softdomifood-db
+    environment:
+      POSTGRES_USER: softdomifood_user
+      POSTGRES_PASSWORD: softdomifood_pass
+      POSTGRES_DB: softdomifood_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - softdomifood-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U softdomifood_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: softdomifood-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - softdomifood-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./SoftDomiFood/api
+      dockerfile: Dockerfile
+    container_name: softdomifood-api
+    environment:
+      DATABASE_URL: postgresql://softdomifood_user:softdomifood_pass@postgres:5432/softdomifood_db
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672/
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      PORT: 5000
+      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./SoftDomiFood/api:/app
+    networks:
+      - softdomifood-network
+    command: uvicorn main:app --host 0.0.0.0 --port 5000 --reload
+
+  worker:
+    build:
+      context: ./SoftDomiFood/worker
+      dockerfile: Dockerfile
+    container_name: softdomifood-worker
+    environment:
+      DATABASE_URL: postgresql://softdomifood_user:softdomifood_pass@postgres:5432/softdomifood_db
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./SoftDomiFood/worker:/app
+      - /app/node_modules
+    networks:
+      - softdomifood-network
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./SoftDomiFood/frontend
+      dockerfile: Dockerfile
+    container_name: softdomifood-frontend
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    volumes:
+      - ./SoftDomiFood/frontend:/app
+      - /app/node_modules
+    networks:
+      - softdomifood-network
+    command: npm run dev
+
+  admin-frontend:
+    build:
+      context: ./SoftDomiFood/admin-frontend
+      dockerfile: Dockerfile
+    container_name: softdomifood-admin-frontend
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api
+    volumes:
+      - ./SoftDomiFood/admin-frontend:/app
+      - /app/node_modules
+    networks:
+      - softdomifood-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  softdomifood-network:
+    driver: bridge
+
