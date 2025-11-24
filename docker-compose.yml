@@ -1,0 +1,39 @@
+services:
+  postgres:
+    extends:
+      file: ./SoftDomiFood/docker-compose.yml
+      service: postgres
+
+  rabbitmq:
+    extends:
+      file: ./SoftDomiFood/docker-compose.yml
+      service: rabbitmq
+
+  api:
+    extends:
+      file: ./SoftDomiFood/docker-compose.yml
+      service: api
+
+  worker:
+    extends:
+      file: ./SoftDomiFood/docker-compose.yml
+      service: worker
+
+  frontend:
+    extends:
+      file: ./SoftDomiFood/docker-compose.yml
+      service: frontend
+
+  admin-frontend:
+    extends:
+      file: ./SoftDomiFood/docker-compose.yml
+      service: admin-frontend
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  softdomifood-network:
+    driver: bridge
+
