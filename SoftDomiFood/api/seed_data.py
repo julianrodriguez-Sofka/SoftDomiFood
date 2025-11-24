@@ -128,11 +128,13 @@ async def seed_products(conn: asyncpg.Connection, force_clear: bool = False):
         inserted_count = 0
         for product in SAMPLE_PRODUCTS:
             if product['name'] not in existing_names:
+                # Establecer stock inicial de 50 para productos de ejemplo
+                stock = product.get('stock', 50)
                 await conn.execute("""
-                    INSERT INTO products (id, name, description, price, category, image, "isAvailable", "createdAt", "updatedAt")
-                    VALUES (gen_random_uuid(), $1, $2, $3, $4::"ProductCategory", $5, $6, NOW(), NOW())
+                    INSERT INTO products (id, name, description, price, category, image, "isAvailable", stock, "createdAt", "updatedAt")
+                    VALUES (gen_random_uuid(), $1, $2, $3, $4::"ProductCategory", $5, $6, $7, NOW(), NOW())
                 """, product['name'], product['description'], product['price'], 
-                    product['category'], product.get('image'), product['isAvailable'])
+                    product['category'], product.get('image'), product['isAvailable'], stock)
                 inserted_count += 1
         
         print(f"✅ Productos procesados: {inserted_count} nuevos, {len(SAMPLE_PRODUCTS) - inserted_count} ya existían")

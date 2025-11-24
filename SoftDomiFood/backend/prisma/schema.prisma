@@ -60,6 +60,7 @@ model Product {
   image       String?
   category    ProductCategory
   isAvailable Boolean  @default(true)
+  stock       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

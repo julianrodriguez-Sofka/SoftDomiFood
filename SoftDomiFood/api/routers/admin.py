@@ -16,6 +16,7 @@ class CreateProductRequest(BaseModel):
     category: str
     image: Optional[str] = None
     isAvailable: bool = True
+    stock: int = 0
 
 class UpdateProductRequest(BaseModel):
     name: Optional[str] = None
@@ -24,6 +25,7 @@ class UpdateProductRequest(BaseModel):
     category: Optional[str] = None
     image: Optional[str] = None
     isAvailable: Optional[bool] = None
+    stock: Optional[int] = None
 
 @router.get("/orders")
 async def get_all_orders_admin(current_user: dict = Depends(get_current_user)):
@@ -81,7 +83,8 @@ async def create_new_product(
         price=request.price,
         category=request.category,
         image=request.image,
-        is_available=request.isAvailable
+        is_available=request.isAvailable,
+        stock=request.stock
     )
     
     if not product:
@@ -116,7 +119,8 @@ async def update_existing_product(
         price=request.price,
         category=request.category,
         image=request.image,
-        is_available=request.isAvailable
+        is_available=request.isAvailable,
+        stock=request.stock
     )
     
     if not product:

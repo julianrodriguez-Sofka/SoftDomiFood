@@ -62,6 +62,14 @@ async def create_new_order(
             if not product.get("isAvailable", True):
                 raise HTTPException(status_code=400, detail=f"El producto {product.get('name')} no está disponible")
             
+            # Validar stock disponible
+            current_stock = product.get("stock", 0)
+            if current_stock < item.quantity:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Stock insuficiente para {product.get('name')}. Disponible: {current_stock}, Solicitado: {item.quantity}"
+                )
+            
             # Usar precio del producto si no se envió
             item_price = item.price if item.price is not None else product.get("price", 0)
             item_total = item_price * item.quantity

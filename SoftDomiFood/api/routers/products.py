@@ -7,10 +7,11 @@ router = APIRouter()
 @router.get("/")
 async def get_products_list(
     category: Optional[str] = Query(None),
-    available: Optional[bool] = Query(None)
+    available: Optional[bool] = Query(None),
+    include_out_of_stock: bool = Query(False, description="Incluir productos sin stock (solo para admin)")
 ):
-    """Obtener lista de productos"""
-    products = await get_products(category=category, available=available)
+    """Obtener lista de productos. Por defecto solo muestra productos con stock > 0"""
+    products = await get_products(category=category, available=available, include_out_of_stock=include_out_of_stock)
     return {"products": products}
 
 @router.get("/{product_id}")

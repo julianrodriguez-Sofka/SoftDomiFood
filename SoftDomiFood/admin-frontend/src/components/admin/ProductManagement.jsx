@@ -10,7 +10,8 @@ const ProductManagement = ({ products, onAddProduct, onEditProduct, onDeleteProd
     price: '',
     category: 'SALCHIPAPAS',
     image: '',
-    isAvailable: true
+    isAvailable: true,
+    stock: 0
   });
 
   const categories = ['SALCHIPAPAS', 'BEBIDAS', 'ADICIONALES', 'COMBOS'];
@@ -23,7 +24,8 @@ const ProductManagement = ({ products, onAddProduct, onEditProduct, onDeleteProd
       price: '',
       category: 'SALCHIPAPAS',
       image: '',
-      isAvailable: true
+      isAvailable: true,
+      stock: 0
     });
     setShowModal(true);
   };
@@ -36,7 +38,8 @@ const ProductManagement = ({ products, onAddProduct, onEditProduct, onDeleteProd
       price: product.price || '',
       category: product.category || 'SALCHIPAPAS',
       image: product.image || '',
-      isAvailable: product.isAvailable !== false
+      isAvailable: product.isAvailable !== false,
+      stock: product.stock !== undefined ? product.stock : 0
     });
     setShowModal(true);
   };
@@ -55,7 +58,8 @@ const ProductManagement = ({ products, onAddProduct, onEditProduct, onDeleteProd
       price: parseFloat(formData.price),
       category: formData.category,
       image: formData.image || null,
-      isAvailable: formData.isAvailable
+      isAvailable: formData.isAvailable,
+      stock: parseInt(formData.stock) || 0
     };
 
     let success = false;
@@ -100,44 +104,79 @@ const ProductManagement = ({ products, onAddProduct, onEditProduct, onDeleteProd
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map(product => (
-              <div key={product.id} className="border border-gray-200 rounded-lg p-4">
-                <img
-                  src={product.image || 'https://placehold.co/300x200/FF6B6B/FFFFFF?text=Producto'}
-                  alt={product.name}
-                  className="w-full h-32 object-cover rounded-lg mb-3"
-                />
-                <h3 className="font-semibold text-gray-800 mb-1">{product.name}</h3>
-                <p className="text-sm text-gray-600 mb-2 line-clamp-2">{product.description || 'Sin descripción'}</p>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-lg font-bold text-blue-600">${parseFloat(product.price || 0).toFixed(2)}</span>
-                  <span className="text-xs text-gray-500">{getCategoryLabel(product.category)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    product.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {product.isAvailable ? 'Disponible' : 'No Disponible'}
-                  </span>
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => handleOpenEdit(product)}
-                      className="p-1 text-blue-500 hover:text-blue-700"
-                      title="Editar"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDeleteProduct(product.id)}
-                      className="p-1 text-red-500 hover:text-red-700"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+            {products.map(product => {
+              const stock = product.stock !== undefined ? product.stock : 0;
+              const isLowStock = stock > 0 && stock < 10;
+              const isOutOfStock = stock === 0;
+              
+              return (
+                <div 
+                  key={product.id} 
+                  className={`border rounded-lg p-4 ${
+                    isOutOfStock 
+                      ? 'border-red-300 bg-red-50' 
+                      : isLowStock 
+                        ? 'border-orange-300 bg-orange-50' 
+                        : 'border-gray-200'
+                  }`}
+                >
+                  <img
+                    src={product.image || 'https://placehold.co/300x200/FF6B6B/FFFFFF?text=Producto'}
+                    alt={product.name}
+                    className="w-full h-32 object-cover rounded-lg mb-3"
+                  />
+                  <h3 className="font-semibold text-gray-800 mb-1">{product.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">{product.description || 'Sin descripción'}</p>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-lg font-bold text-blue-600">${parseFloat(product.price || 0).toFixed(2)}</span>
+                    <span className="text-xs text-gray-500">{getCategoryLabel(product.category)}</span>
+                  </div>
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-700">Stock:</span>
+                      <span className={`text-sm font-bold ${
+                        isOutOfStock 
+                          ? 'text-red-600' 
+                          : isLowStock 
+                            ? 'text-orange-600' 
+                            : 'text-green-600'
+                      }`}>
+                        {stock} unidades
+                      </span>
+                    </div>
+                    {isLowStock && (
+                      <span className="text-xs text-orange-600 font-medium">⚠️ Stock bajo</span>
+                    )}
+                    {isOutOfStock && (
+                      <span className="text-xs text-red-600 font-medium">❌ Sin stock</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      product.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {product.isAvailable ? 'Disponible' : 'No Disponible'}
+                    </span>
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => handleOpenEdit(product)}
+                        className="p-1 text-blue-500 hover:text-blue-700"
+                        title="Editar"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteProduct(product.id)}
+                        className="p-1 text-red-500 hover:text-red-700"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -226,6 +265,24 @@ const ProductManagement = ({ products, onAddProduct, onEditProduct, onDeleteProd
                   className="w-full p-2 border border-gray-300 rounded-lg"
                   placeholder="https://..."
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Stock (Cantidad disponible) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.stock}
+                  onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Si el stock es 0, el producto no se mostrará a los clientes
+                </p>
               </div>
 
               <div className="flex items-center">

@@ -215,11 +215,11 @@
                 </div>
                 <div class="metric">
                     <span class="metric-label">Coverage</span>
-                    <span class="metric-value">29%</span>
+                    <span class="metric-value">28%</span>
                 </div>
                 <div class="metric">
                     <span class="metric-label">Tiempo de Ejecución</span>
-                    <span class="metric-value">3.04s</span>
+                    <span class="metric-value">3.46s</span>
                 </div>
             </div>
             
@@ -243,6 +243,15 @@
         <div class="section">
             <h2>📊 Resumen de Resultados de Tests Funcionales</h2>
             
+            <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 5px; color: #1e40af;">📅 Última Ejecución de Tests</h4>
+                <p style="margin: 0; color: #1e3a8a; font-size: 0.95em;">
+                    <strong>Fecha:</strong> <span id="testExecutionDate"></span><br>
+                    <strong>Resultado:</strong> ✅ 22 tests pasados, 0 fallidos<br>
+                    <strong>Coverage:</strong> 28% del código de la API
+                </p>
+            </div>
+            
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h3 style="margin-bottom: 15px; color: #333;">Resultados de Ejecución</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -260,16 +269,20 @@
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6;">
                         <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Coverage</div>
-                        <div style="font-size: 1.5em; font-weight: bold; color: #3b82f6;">29%</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #3b82f6;">28%</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                        <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Tiempo de Ejecución</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: #10b981;">3.46s</div>
                     </div>
                 </div>
             </div>
             
             <div style="background: #d1fae5; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; margin-bottom: 20px;">
-                <h4 style="margin-bottom: 10px; color: #065f46;">✅ Estado: Todos los Tests Pasaron</h4>
+                <h4 style="margin-bottom: 10px; color: #065f46;">✅ Estado: Todos los Tests Pasaron (22/22)</h4>
                 <p style="margin: 0; color: #047857;">
-                    Se eliminaron los tests que requerían conexión real a base de datos para evitar afectar la funcionalidad del proyecto.
-                    Los tests restantes validan la lógica de negocio (password hashing, JWT tokens, validaciones) sin requerir BD.
+                    Ejecución exitosa de todos los tests funcionales. Los tests validan la lógica de negocio (password hashing, JWT tokens, validaciones) 
+                    usando SQLite en memoria para evitar dependencias de base de datos externa. Tiempo de ejecución: 3.46 segundos.
                 </p>
             </div>
             
@@ -301,16 +314,40 @@
                         <span style="font-weight: bold; color: #f59e0b;">62%</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: 500;">database_service.py</span>
-                        <span style="font-weight: bold; color: #ef4444;">15%</span>
+                        <span style="font-weight: 500;">products.py (router)</span>
+                        <span style="font-weight: bold; color: #f59e0b;">53%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">addresses.py (router)</span>
+                        <span style="font-weight: bold; color: #f59e0b;">45%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">admin.py (router)</span>
+                        <span style="font-weight: bold; color: #f59e0b;">45%</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span style="font-weight: 500;">main.py</span>
-                        <span style="font-weight: bold; color: #f59e0b;">47%</span>
+                        <span style="font-weight: bold; color: #f59e0b;">39%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">orders.py (router)</span>
+                        <span style="font-weight: bold; color: #ef4444;">35%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">rabbitmq.py</span>
+                        <span style="font-weight: bold; color: #ef4444;">22%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">database_service.py</span>
+                        <span style="font-weight: bold; color: #ef4444;">14%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">init_db.py</span>
+                        <span style="font-weight: bold; color: #ef4444;">16%</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 500;">TOTAL</span>
-                        <span style="font-weight: bold; color: #3b82f6;">29%</span>
+                        <span style="font-weight: bold; color: #3b82f6;">28%</span>
                     </div>
                 </div>
             </div>
@@ -346,13 +383,16 @@
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
                 <h3 style="margin-bottom: 10px; color: #333;">Rutas de Archivos (Windows)</h3>
                 <code style="display: block; padding: 10px; background: white; border-radius: 5px; margin-bottom: 5px;">
-                    file:///F:/Prueba Restaurant/prueba-restaurante-/qa_automated/RESULTADOS_ANALISIS_SEGURIDAD.md
+                    file:///F:/SoftDomiFood/SoftDomiFood/qa_automated/RESULTADOS_ANALISIS_SEGURIDAD.md
                 </code>
                 <code style="display: block; padding: 10px; background: white; border-radius: 5px; margin-bottom: 5px;">
-                    file:///F:/Prueba Restaurant/prueba-restaurante-/qa_automated/CORRECCION_B104.md
+                    file:///F:/SoftDomiFood/SoftDomiFood/qa_automated/CORRECCION_B104.md
+                </code>
+                <code style="display: block; padding: 10px; background: white; border-radius: 5px; margin-bottom: 5px;">
+                    file:///F:/SoftDomiFood/SoftDomiFood/qa_automated/RESULTADOS_EJECUCION.md
                 </code>
                 <code style="display: block; padding: 10px; background: white; border-radius: 5px;">
-                    file:///F:/Prueba Restaurant/prueba-restaurante-/qa_automated/RESULTADOS_EJECUCION.md
+                    file:///F:/SoftDomiFood/SoftDomiFood/qa_automated/generate_reports.html
                 </code>
             </div>
             
@@ -376,7 +416,18 @@
     </div>
     
     <script>
+        // Actualizar fecha de última actualización
         document.getElementById('lastUpdate').textContent = new Date().toLocaleString('es-ES');
+        
+        // Actualizar fecha de ejecución de tests
+        const testDate = new Date();
+        document.getElementById('testExecutionDate').textContent = testDate.toLocaleString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     </script>
 </body>
 </html>

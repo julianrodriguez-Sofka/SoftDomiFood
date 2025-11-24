@@ -59,8 +59,10 @@ export const authAPI = {
 
 // Products
 export const productsAPI = {
-  getAll: async () => {
-    const response = await api.get('/products');
+  getAll: async (includeOutOfStock = false) => {
+    const response = await api.get('/products', {
+      params: { include_out_of_stock: includeOutOfStock }
+    });
     return response.data;
   },
 

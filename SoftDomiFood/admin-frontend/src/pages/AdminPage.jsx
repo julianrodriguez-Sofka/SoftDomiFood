@@ -51,7 +51,8 @@ const AdminPage = ({ switchToClient, adminUser, onLogout, toast }) => {
 
   const loadProducts = async () => {
     try {
-      const data = await productsAPI.getAll();
+      // Para admin, incluir productos sin stock también
+      const data = await productsAPI.getAll(true);
       setProducts(data.products || data || []);
     } catch (error) {
       console.error('Error loading products:', error);

@@ -31,21 +31,33 @@ def convert_value(value: Any) -> Any:
         return [convert_uuid_to_str(item) for item in value]
     return value
 
-async def get_products(category: Optional[str] = None, available: Optional[bool] = None) -> List[Dict[str, Any]]:
-    """Obtener lista de productos"""
+async def get_products(category: Optional[str] = None, available: Optional[bool] = None, include_out_of_stock: bool = False) -> List[Dict[str, Any]]:
+    """Obtener lista de productos
+    
+    Args:
+        category: Filtrar por categoría
+        available: Filtrar por disponibilidad
+        include_out_of_stock: Si es False, solo muestra productos con stock > 0 (para clientes)
+    """
     conn = await get_connection()
     try:
-        query = "SELECT id, name, description, price, image, category, \"isAvailable\", \"createdAt\" FROM products WHERE 1=1"
+        query = "SELECT id, name, description, price, image, category, \"isAvailable\", stock, \"createdAt\" FROM products WHERE 1=1"
         params = []
+        param_index = 1
         
         if category:
-            query += " AND category = $1"
+            query += f" AND category = ${param_index}"
             params.append(category)
+            param_index += 1
         
         if available is not None:
-            param_index = len(params) + 1
             query += f" AND \"isAvailable\" = ${param_index}"
             params.append(available)
+            param_index += 1
+        
+        # Para clientes, solo mostrar productos con stock > 0
+        if not include_out_of_stock:
+            query += f" AND stock > 0"
         
         query += " ORDER BY \"createdAt\" DESC"
         
@@ -59,7 +71,7 @@ async def get_product_by_id(product_id: str) -> Optional[Dict[str, Any]]:
     conn = await get_connection()
     try:
         row = await conn.fetchrow(
-            'SELECT id, name, description, price, image, category, "isAvailable" FROM products WHERE id = $1',
+            'SELECT id, name, description, price, image, category, "isAvailable", stock FROM products WHERE id = $1',
             product_id
         )
         return convert_uuid_to_str(dict(row)) if row else None
@@ -67,10 +79,25 @@ async def get_product_by_id(product_id: str) -> Optional[Dict[str, Any]]:
         await conn.close()
 
 async def create_order(user_id: str, address_id: str, items: List[Dict], total: float, payment_method: str = "CASH", notes: Optional[str] = None) -> Dict[str, Any]:
-    """Crear pedido en la base de datos"""
+    """Crear pedido en la base de datos y reducir stock"""
     conn = await get_connection()
     try:
         async with conn.transaction():
+            # Validar stock antes de crear la orden
+            for item in items:
+                product = await conn.fetchrow(
+                    'SELECT stock, name FROM products WHERE id = $1',
+                    item["productId"]
+                )
+                if not product:
+                    raise ValueError(f"Producto {item['productId']} no encontrado")
+                
+                current_stock = product['stock']
+                requested_quantity = item["quantity"]
+                
+                if current_stock < requested_quantity:
+                    raise ValueError(f"Stock insuficiente para {product['name']}. Disponible: {current_stock}, Solicitado: {requested_quantity}")
+            
             # Crear orden
             order_id = await conn.fetchval(
                 """
@@ -81,14 +108,25 @@ async def create_order(user_id: str, address_id: str, items: List[Dict], total: 
                 user_id, address_id, "PENDING", total, payment_method, notes
             )
             
-            # Crear items de la orden
+            # Crear items de la orden y reducir stock
             for item in items:
+                # Insertar item de la orden
                 await conn.execute(
                     """
                     INSERT INTO order_items (id, "orderId", "productId", quantity, price, "createdAt")
                     VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
                     """,
                     order_id, item["productId"], item["quantity"], item["price"]
+                )
+                
+                # Reducir stock del producto
+                await conn.execute(
+                    """
+                    UPDATE products 
+                    SET stock = stock - $1, "updatedAt" = NOW()
+                    WHERE id = $2
+                    """,
+                    item["quantity"], item["productId"]
                 )
             
             # Obtener orden completa con items
@@ -373,34 +411,34 @@ async def get_address_by_id(address_id: str) -> Optional[Dict[str, Any]]:
     finally:
         await conn.close()
 
-async def create_product(name: str, description: Optional[str], price: float, category: str, image: Optional[str] = None, is_available: bool = True) -> Dict[str, Any]:
+async def create_product(name: str, description: Optional[str], price: float, category: str, image: Optional[str] = None, is_available: bool = True, stock: int = 0) -> Dict[str, Any]:
     """Crear nuevo producto"""
     conn = await get_connection()
     try:
         product_id = await conn.fetchval(
             """
-            INSERT INTO products (id, name, description, price, image, category, "isAvailable", "createdAt", "updatedAt")
-            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW(), NOW())
+            INSERT INTO products (id, name, description, price, image, category, "isAvailable", stock, "createdAt", "updatedAt")
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             RETURNING id
             """,
-            name, description, price, image, category, is_available
+            name, description, price, image, category, is_available, stock
         )
         
         product = await conn.fetchrow(
-            'SELECT id, name, description, price, image, category, "isAvailable", "createdAt", "updatedAt" FROM products WHERE id = $1',
+            'SELECT id, name, description, price, image, category, "isAvailable", stock, "createdAt", "updatedAt" FROM products WHERE id = $1',
             product_id
         )
         return convert_uuid_to_str(dict(product)) if product else None
     finally:
         await conn.close()
 
-async def update_product(product_id: str, name: Optional[str] = None, description: Optional[str] = None, price: Optional[float] = None, category: Optional[str] = None, image: Optional[str] = None, is_available: Optional[bool] = None) -> Optional[Dict[str, Any]]:
+async def update_product(product_id: str, name: Optional[str] = None, description: Optional[str] = None, price: Optional[float] = None, category: Optional[str] = None, image: Optional[str] = None, is_available: Optional[bool] = None, stock: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """Actualizar producto existente"""
     conn = await get_connection()
     try:
         # Obtener producto actual
         current_product = await conn.fetchrow(
-            'SELECT name, description, price, category, image, "isAvailable" FROM products WHERE id = $1',
+            'SELECT name, description, price, category, image, "isAvailable", stock FROM products WHERE id = $1',
             product_id
         )
         
@@ -414,16 +452,17 @@ async def update_product(product_id: str, name: Optional[str] = None, descriptio
         updated_category = category if category is not None else current_product['category']
         updated_image = image if image is not None else current_product['image']
         updated_available = is_available if is_available is not None else current_product['isAvailable']
+        updated_stock = stock if stock is not None else current_product['stock']
         
         # Actualizar producto
         product = await conn.fetchrow(
             """
             UPDATE products 
-            SET name = $1, description = $2, price = $3, category = $4, image = $5, "isAvailable" = $6, "updatedAt" = NOW()
-            WHERE id = $7
-            RETURNING id, name, description, price, image, category, "isAvailable", "createdAt", "updatedAt"
+            SET name = $1, description = $2, price = $3, category = $4, image = $5, "isAvailable" = $6, stock = $7, "updatedAt" = NOW()
+            WHERE id = $8
+            RETURNING id, name, description, price, image, category, "isAvailable", stock, "createdAt", "updatedAt"
             """,
-            updated_name, updated_description, updated_price, updated_category, updated_image, updated_available, product_id
+            updated_name, updated_description, updated_price, updated_category, updated_image, updated_available, updated_stock, product_id
         )
         
         return convert_uuid_to_str(dict(product)) if product else None

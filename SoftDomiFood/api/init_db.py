@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS "products" (
     image VARCHAR(500),
     category "ProductCategory" NOT NULL,
     "isAvailable" BOOLEAN DEFAULT true,
+    stock INTEGER DEFAULT 0 NOT NULL,
     "createdAt" TIMESTAMP DEFAULT NOW(),
     "updatedAt" TIMESTAMP DEFAULT NOW()
 );
@@ -120,6 +121,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON "orders"(status);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON "order_items"("orderId");
 CREATE INDEX IF NOT EXISTS idx_products_category ON "products"(category);
 CREATE INDEX IF NOT EXISTS idx_products_is_available ON "products"("isAvailable");
+CREATE INDEX IF NOT EXISTS idx_products_stock ON "products"(stock);
 """
 
 async def create_admin_user():
