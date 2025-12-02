@@ -12,6 +12,7 @@ const ClientPage = ({ switchToAdmin, toast, adminUser = null, isAdminView = fals
   const [products, setProducts] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [activeTab, setActiveTab] = useState('menu');
   const [orderForm, setOrderForm] = useState({
     notes: '',
@@ -236,11 +237,13 @@ const ClientPage = ({ switchToAdmin, toast, adminUser = null, isAdminView = fals
         addressId: orderForm.addressId,
         paymentMethod: orderForm.paymentMethod,
         notes: orderForm.notes || null,
-        total: total  // Incluir el total calculado
+        total: total,  // Incluir el total calculado
+        couponCode: appliedCoupon ? appliedCoupon.code : null  // Incluir código de cupón si existe
       };
 
       await ordersAPI.create(orderData);
       setCart([]);
+      setAppliedCoupon(null);  // Limpiar cupón aplicado
       setOrderForm({ notes: '', addressId: '', paymentMethod: 'CASH' });
       toast.success('¡Pedido realizado con éxito!');
       loadOrders();
@@ -372,6 +375,9 @@ const ClientPage = ({ switchToAdmin, toast, adminUser = null, isAdminView = fals
                   onUpdateQuantity={updateQuantity}
                   onRemoveFromCart={removeFromCart}
                   totalPrice={getTotalPrice()}
+                  onCouponApplied={setAppliedCoupon}
+                  appliedCoupon={appliedCoupon}
+                  toast={toast}
                 />
               )}
 

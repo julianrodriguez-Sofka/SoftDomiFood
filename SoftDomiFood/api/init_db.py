@@ -11,7 +11,7 @@ from typing import Optional
 # Agregar el directorio actual al path para importar servicios
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://softdomifood_user:softdomifood_pass@localhost:5432/softdomifood_db")
 
 # Script SQL para crear todas las tablas
 INIT_SQL = """
@@ -99,6 +99,10 @@ CREATE TABLE IF NOT EXISTS "orders" (
     CONSTRAINT fk_order_address FOREIGN KEY ("addressId") REFERENCES "addresses"(id)
 );
 
+-- Asegurar columnas nuevas en orders si la tabla existía antes sin cupones
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(50);
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS discount_applied DECIMAL(10,2) DEFAULT 0;
+
 -- Tabla order_items
 CREATE TABLE IF NOT EXISTS "order_items" (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -117,9 +121,47 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON "users"(email);
 CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON "addresses"("userId");
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON "orders"("userId");
 CREATE INDEX IF NOT EXISTS idx_orders_status ON "orders"(status);
+CREATE INDEX IF NOT EXISTS idx_orders_coupon_code ON "orders"(coupon_code);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON "order_items"("orderId");
 CREATE INDEX IF NOT EXISTS idx_products_category ON "products"(category);
 CREATE INDEX IF NOT EXISTS idx_products_is_available ON "products"("isAvailable");
+
+-- Tabla coupons
+DO $$ BEGIN
+    CREATE TYPE "DiscountType" AS ENUM ('AMOUNT', 'PERCENTAGE');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "coupons" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    discount_type "DiscountType" NOT NULL,
+    amount DECIMAL(10,2),
+    percentage DECIMAL(5,2),
+    valid_from TIMESTAMP,
+    valid_to TIMESTAMP,
+    max_uses INTEGER,
+    per_user_limit INTEGER,
+    applicable_user_id UUID,
+    is_active BOOLEAN DEFAULT true,
+    "createdAt" TIMESTAMP DEFAULT NOW(),
+    "updatedAt" TIMESTAMP DEFAULT NOW()
+);
+
+-- Tabla coupon_usages
+CREATE TABLE IF NOT EXISTS "coupon_usages" (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    coupon_id UUID NOT NULL REFERENCES "coupons"(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "users"(id) ON DELETE CASCADE,
+    order_id UUID NOT NULL REFERENCES "orders"(id) ON DELETE CASCADE,
+    used_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON "coupons"(code);
+CREATE INDEX IF NOT EXISTS idx_coupon_usages_coupon_id ON "coupon_usages"(coupon_id);
+CREATE INDEX IF NOT EXISTS idx_coupon_usages_user_id ON "coupon_usages"(user_id);
 """
 
 async def create_admin_user():
@@ -180,7 +222,7 @@ async def init_database():
             print("✅ Base de datos inicializada correctamente")
             
             # Verificar que todas las tablas se crearon
-            tables_to_check = ['users', 'products', 'addresses', 'orders', 'order_items']
+            tables_to_check = ['users', 'products', 'addresses', 'orders', 'order_items', 'coupons', 'coupon_usages']
             for table in tables_to_check:
                 exists = await conn.fetchval("""
                     SELECT EXISTS (
@@ -215,7 +257,7 @@ async def check_tables_exist() -> bool:
         conn = await asyncpg.connect(DATABASE_URL)
         try:
             # Verificar si existen todas las tablas necesarias
-            tables_to_check = ['users', 'products', 'addresses', 'orders', 'order_items']
+            tables_to_check = ['users', 'products', 'addresses', 'orders', 'order_items', 'coupons', 'coupon_usages']
             for table in tables_to_check:
                 result = await conn.fetchval("""
                     SELECT EXISTS (

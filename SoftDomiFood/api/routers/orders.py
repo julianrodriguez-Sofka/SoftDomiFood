@@ -23,6 +23,7 @@ class CreateOrderRequest(BaseModel):
     total: Optional[float] = None  # Opcional, se calculará si no se envía
     paymentMethod: PaymentMethod = PaymentMethod.CASH
     notes: Optional[str] = None
+    couponCode: Optional[str] = None
 
 @router.post("/")
 async def create_new_order(
@@ -79,19 +80,48 @@ async def create_new_order(
         if final_total <= 0:
             raise HTTPException(status_code=422, detail="El total del pedido debe ser mayor a 0")
         
-        # Crear orden en la base de datos
+        # Aplicar cupón si se envió
+        discount_applied = 0.0
+        if order_data.couponCode:
+            from services.database_service import validate_coupon_for_user
+            validation = await validate_coupon_for_user(order_data.couponCode, current_user["userId"]) 
+            if not validation.get("valid"):
+                raise HTTPException(status_code=400, detail=f"Cupón inválido: {validation.get('reason')}")
+            coupon = validation.get("coupon", {})
+            if coupon.get("discount_type") == "PERCENTAGE":
+                pct = float(coupon.get("percentage", 0))
+                discount_applied = round(final_total * (pct/100.0), 2)
+            elif coupon.get("discount_type") == "AMOUNT":
+                discount_applied = float(coupon.get("amount", 0))
+            # asegurar no negativo
+            discount_applied = max(0.0, min(discount_applied, final_total))
+            final_total = round(final_total - discount_applied, 2)
+
+        # Crear orden en la base de datos incluyendo cupón y descuento
         order = await create_order(
             user_id=current_user["userId"],
             address_id=order_data.addressId,
             items=validated_items,
             total=final_total,
             payment_method=order_data.paymentMethod.value,
-            notes=order_data.notes
+            notes=order_data.notes,
+            coupon_code=order_data.couponCode if order_data.couponCode else None,
+            discount_applied=discount_applied
         )
         
         if not order:
             raise HTTPException(status_code=500, detail="Error creating order")
         
+        # Registrar uso de cupón si aplicó
+        if order_data.couponCode:
+            try:
+                from services.database_service import register_coupon_usage, get_coupon_by_code
+                c = await get_coupon_by_code(order_data.couponCode)
+                if c and order and order.get("id"):
+                    await register_coupon_usage(c["id"], current_user["userId"], order["id"])
+            except Exception as e:
+                print(f"⚠️  Error registrando uso de cupón: {e}")
+
         # Publicar orden a RabbitMQ
         try:
             await publish_order(order)
@@ -100,7 +130,7 @@ async def create_new_order(
             print(f"⚠️  Error publicando a RabbitMQ: {mq_error}")
             print("   La orden se creó pero no se publicó a la cola")
         
-        return {"order": order, "message": "Order created successfully"}
+        return {"order": order, "message": "Order created successfully", "discountApplied": discount_applied}
     except HTTPException:
         raise
     except Exception as e:

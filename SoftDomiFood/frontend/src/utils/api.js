@@ -150,4 +150,12 @@ export const addressesAPI = {
   },
 };
 
+// Coupons
+export const couponsAPI = {
+  validate: async (couponCode) => {
+    const response = await api.post('/coupons/validate', { code: couponCode });
+    return response.data;
+  },
+};
+
 export default api;

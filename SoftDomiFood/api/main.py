@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 from database import engine, Base, get_db
-from routers import auth, products, orders, admin, addresses
+from routers import auth, products, orders, admin, addresses, payments
 from init_db import init_database, check_tables_exist, create_admin_user
 from services.rabbitmq import get_channel, close_connection
 
@@ -92,6 +92,23 @@ app.include_router(products.router, prefix="/api/products", tags=["products"])
 app.include_router(orders.router, prefix="/api/orders", tags=["orders"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(addresses.router, prefix="/api", tags=["addresses"])
+
+# Cupones: endpoints mínimos para validación (público con token)
+from fastapi import APIRouter, Depends
+from routers.auth import get_current_user
+from services.database_service import validate_coupon_for_user
+
+coupons_router = APIRouter()
+
+@coupons_router.post("/validate")
+async def validate_coupon(code: dict, current_user: dict = Depends(get_current_user)):
+    coupon_code = code.get("code")
+    if not coupon_code:
+        raise HTTPException(status_code=400, detail="Falta código de cupón")
+    result = await validate_coupon_for_user(coupon_code, current_user.get("userId"))
+    return result
+
+app.include_router(coupons_router, prefix="/api/coupons", tags=["coupons"])
 
 @app.get("/")
 async def root():

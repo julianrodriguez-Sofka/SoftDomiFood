@@ -177,14 +177,36 @@ const MyOrders = ({ user, toast }) => {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                  <div className="flex items-center text-sm text-gray-600">
+                <div className="pt-3 border-t border-gray-200">
+                  <div className="flex items-center text-sm text-gray-600 mb-3">
                     <MapPin className="w-4 h-4 mr-1" />
                     <span>Dirección de entrega registrada</span>
                   </div>
-                  <p className="font-bold text-lg text-gray-800">
-                    Total: ${(parseFloat(order.total) || 0).toFixed(2)}
-                  </p>
+                  
+                  {/* Mostrar desglose de precios con cupón si aplica */}
+                  <div className="space-y-2">
+                    {order.coupon_code && order.discount_applied > 0 ? (
+                      <>
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Subtotal:</span>
+                          <span>${((parseFloat(order.total) || 0) + (parseFloat(order.discount_applied) || 0)).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-green-600 font-medium">
+                          <span>Cupón aplicado ({order.coupon_code}):</span>
+                          <span>-${(parseFloat(order.discount_applied) || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-lg text-gray-800 pt-2 border-t border-gray-200">
+                          <span>Total:</span>
+                          <span>${(parseFloat(order.total) || 0).toFixed(2)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between font-bold text-lg text-gray-800">
+                        <span>Total:</span>
+                        <span>${(parseFloat(order.total) || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {order.notes && (

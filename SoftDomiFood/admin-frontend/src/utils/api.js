@@ -96,6 +96,26 @@ export const adminAPI = {
     const response = await api.get('/admin/customers');
     return response.data;
   },
+
+  // Coupons
+  coupons: {
+    getAll: async () => {
+      const response = await api.get('/admin/coupons');
+      return response.data;
+    },
+    create: async (couponData) => {
+      const response = await api.post('/admin/coupons', couponData);
+      return response.data;
+    },
+    update: async (couponId, couponData) => {
+      const response = await api.put(`/admin/coupons/${couponId}`, couponData);
+      return response.data;
+    },
+    delete: async (couponId) => {
+      const response = await api.delete(`/admin/coupons/${couponId}`);
+      return response.data;
+    },
+  },
 };
 
 export default api;

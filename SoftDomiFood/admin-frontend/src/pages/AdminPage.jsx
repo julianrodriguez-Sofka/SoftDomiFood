@@ -3,17 +3,19 @@ import AdminLayout from '../components/admin/AdminLayout';
 import OrderManagement from '../components/admin/OrderManagement';
 import ProductManagement from '../components/admin/ProductManagement';
 import CustomerManagement from '../components/admin/CustomerManagement';
+import CouponManagement from '../components/admin/CouponManagement';
 import StatsCard from '../components/admin/StatsCard';
 import { adminAPI, productsAPI } from '../utils/api';
-import { Package2, DollarSign, Edit, User } from 'lucide-react';
+import { Package2, DollarSign, Edit, User, Ticket } from 'lucide-react';
 
 const AdminPage = ({ switchToClient, adminUser, onLogout, toast }) => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [coupons, setCoupons] = useState([]);
   const [stats, setStats] = useState({ todayOrders: 0, todayRevenue: 0 });
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState('orders'); // 'orders', 'products', 'customers'
+  const [activeView, setActiveView] = useState('orders'); // 'orders', 'products', 'customers', 'coupons'
 
   // Load real data from API
   useEffect(() => {
@@ -30,7 +32,7 @@ const AdminPage = ({ switchToClient, adminUser, onLogout, toast }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      await Promise.all([loadProducts(), loadOrders(), loadCustomers()]);
+      await Promise.all([loadProducts(), loadOrders(), loadCustomers(), loadCoupons()]);
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {
@@ -46,6 +48,17 @@ const AdminPage = ({ switchToClient, adminUser, onLogout, toast }) => {
     } catch (error) {
       console.error('Error loading customers:', error);
       setCustomers([]);
+    }
+  };
+
+  const loadCoupons = async () => {
+    try {
+      const data = await adminAPI.coupons.getAll();
+      const couponsList = data.coupons || data || [];
+      setCoupons(couponsList);
+    } catch (error) {
+      console.error('Error loading coupons:', error);
+      setCoupons([]);
     }
   };
 
@@ -188,6 +201,48 @@ const AdminPage = ({ switchToClient, adminUser, onLogout, toast }) => {
     }
   };
 
+  const handleAddCoupon = async (couponData) => {
+    try {
+      await adminAPI.coupons.create(couponData);
+      await loadCoupons();
+      toast.success('Cupón creado correctamente');
+      return true;
+    } catch (error) {
+      console.error('Error adding coupon:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Error al crear el cupón';
+      toast.error(errorMessage);
+      return false;
+    }
+  };
+
+  const handleEditCoupon = async (couponId, couponData) => {
+    try {
+      await adminAPI.coupons.update(couponId, couponData);
+      await loadCoupons();
+      toast.success('Cupón actualizado correctamente');
+      return true;
+    } catch (error) {
+      console.error('Error updating coupon:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Error al actualizar el cupón';
+      toast.error(errorMessage);
+      return false;
+    }
+  };
+
+  const handleDeleteCoupon = async (couponId) => {
+    try {
+      await adminAPI.coupons.delete(couponId);
+      await loadCoupons();
+      toast.success('Cupón eliminado correctamente');
+      return true;
+    } catch (error) {
+      console.error('Error deleting coupon:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Error al eliminar el cupón';
+      toast.error(errorMessage);
+      return false;
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout switchToClient={switchToClient} adminUser={adminUser} onLogout={onLogout}>
@@ -242,6 +297,17 @@ const AdminPage = ({ switchToClient, adminUser, onLogout, toast }) => {
                 <User className="w-4 h-4" />
                 <span>Clientes</span>
               </button>
+              <button
+                onClick={() => setActiveView('coupons')}
+                className={`w-full flex items-center space-x-2 p-2 rounded-lg transition-colors ${
+                  activeView === 'coupons'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Ticket className="w-4 h-4" />
+                <span>Cupones</span>
+              </button>
             </nav>
           </div>
 
@@ -284,6 +350,15 @@ const AdminPage = ({ switchToClient, adminUser, onLogout, toast }) => {
             <CustomerManagement
               customers={customers}
               loading={loading}
+            />
+          )}
+
+          {activeView === 'coupons' && (
+            <CouponManagement
+              coupons={coupons}
+              onAddCoupon={handleAddCoupon}
+              onEditCoupon={handleEditCoupon}
+              onDeleteCoupon={handleDeleteCoupon}
             />
           )}
         </div>

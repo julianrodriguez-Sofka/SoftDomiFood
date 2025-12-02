@@ -109,13 +109,16 @@ prueba-restaurante--Develop-JE/
 │   ├── package.json
 │   └── Dockerfile
 │
-├── 📁 backend/                      # Backend Legacy (Node.js + Express)
-│   ├── src/
-│   │   ├── controllers/             # Controladores
-│   │   ├── routes/                  # Rutas
-│   │   └── middleware/              # Middleware
-│   ├── prisma/
-│   └── package.json
+├── 📁 scripts/                      # Scripts utilitarios
+│   ├── verify_addresses_table.py    # Verificar tabla addresses
+│   ├── force_create_tables.py       # Forzar creación de tablas
+│   └── ops/                         # Orquestación y mantenimiento
+│       ├── start-local.ps1          # Arranque local (DB+RabbitMQ en Docker)
+│       ├── stop-local.ps1           # Stop servicios locales
+│       ├── clean-docker.ps1         # Limpieza Docker
+│       ├── start-podman.ps1         # Arranque completo con Podman
+│       ├── stop-podman.ps1          # Stop Podman
+│       └── clean-podman.ps1         # Limpieza Podman
 │
 ├── 📁 qa_automated/                 # Testing Automatizado
 │   ├── tests/                       # Tests automatizados
@@ -132,7 +135,7 @@ prueba-restaurante--Develop-JE/
 │
 ├── 📄 docker-compose.yml            # Orquestación de servicios
 ├── 📄 AI_WORKFLOW.md                # Metodología de desarrollo con IA
-├── 📄 DESARROLLO-LOCAL.md           # Guía de desarrollo local
+├── 📄 SoftDomiFood/DESARROLLO-LOCAL.md  # Guía de desarrollo local
 ├── 📄 SETUP_INSTRUCTIONS.md         # Instrucciones de configuración
 └── 📄 README.md                     # Este archivo
 ```
@@ -351,7 +354,7 @@ Este documento define la metodología **"AI-First Development"** utilizada en el
 
 | Documento | Descripción |
 |-----------|-------------|
-| [DESARROLLO-LOCAL.md](./DESARROLLO-LOCAL.md) | Guía para desarrollo local sin Docker |
+| [DESARROLLO-LOCAL.md](./SoftDomiFood/DESARROLLO-LOCAL.md) | Guía para desarrollo local |
 | [SETUP_INSTRUCTIONS.md](./SETUP_INSTRUCTIONS.md) | Instrucciones detalladas de configuración |
 | [qa_automated/README.md](./qa_automated/README.md) | Documentación completa de testing |
 | [MIGRATION_SUMMARY.md](./MIGRATION_SUMMARY.md) | Resumen de migraciones de base de datos |

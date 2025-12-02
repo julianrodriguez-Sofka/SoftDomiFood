@@ -125,12 +125,36 @@ const OrderManagement = ({ orders, onStatusChange }) => {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <p className="font-semibold text-gray-800">Total: ${(parseFloat(order.total) || 0).toFixed(2)}</p>
-                  <p className="text-sm text-gray-600">
+                <div className="mb-3">
+                  <p className="text-sm text-gray-600 mb-1">
                     <MapPin className="inline w-4 h-4 mr-1" />
                     {address}
                   </p>
+                </div>
+
+                {/* Desglose de precios con cupón si aplica */}
+                <div className="space-y-1">
+                  {order.coupon_code && order.discount_applied > 0 ? (
+                    <>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Subtotal:</span>
+                        <span>${((parseFloat(order.total) || 0) + (parseFloat(order.discount_applied) || 0)).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-green-600 font-medium">
+                        <span>Cupón ({order.coupon_code}):</span>
+                        <span>-${(parseFloat(order.discount_applied) || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold text-gray-800 pt-1 border-t border-gray-200">
+                        <span>Total:</span>
+                        <span>${(parseFloat(order.total) || 0).toFixed(2)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between font-semibold text-gray-800">
+                      <span>Total:</span>
+                      <span>${(parseFloat(order.total) || 0).toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-2 mt-4">
